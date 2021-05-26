@@ -80,7 +80,7 @@ export class WorkerChannel implements IWorkerChannel {
           systemError(`Worker ${workerId} malformed message`, msgError);
           throw new InternalException(msgError);
         }
-        oldWrite.apply(eventStream, arguments);
+        oldWrite.apply(eventStream, [msg]);
     }
   }
 
@@ -149,7 +149,8 @@ export class WorkerChannel implements IWorkerChannel {
       RpcHttpTriggerMetadataRemoved: "true",
       RpcHttpBodyOnly: "true",
       IgnoreEmptyValuedRpcHttpHeaders: "true",
-      UseNullableValueDictionaryForHttp: "true"
+      UseNullableValueDictionaryForHttp: "true",
+      WorkerStatus: "true"
     };
 
     if (!this._v1WorkerBehavior) {
@@ -212,7 +213,7 @@ export class WorkerChannel implements IWorkerChannel {
       this.log({
         invocationId: msg.invocationId,
         category: `${info.name}.Invocation`,
-        message: format.apply(null, args),
+        message: format.apply(null, <[any, any[]]>args),
         level: level,
         logCategory: category
       });
@@ -327,10 +328,15 @@ export class WorkerChannel implements IWorkerChannel {
   }
 
   /**
-   * NOT USED
+   * Worker sends the host empty response to evaluate the worker's latency
    */ 
   public workerStatusRequest(requestId: string, msg: rpc.WorkerStatusRequest): void {
-    // Not yet implemented
+    let workerStatusResponse: rpc.IWorkerStatusResponse = {
+    };
+    this._eventStream.write({
+      requestId: requestId,
+      workerStatusResponse
+    });
   }
 
   /**
